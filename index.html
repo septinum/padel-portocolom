@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pádel">
+<meta name="theme-color" content="#1d4f91">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}img{max-width:100%}</style>
+</head>
+<body>
+<title>Padel Portocolom</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: una sola columna estrecha tipo marcador; banda azul de pista arriba, tarjetas de pareja y agenda por día debajo. */
+:root{
+  --bg:#eef2f6; --surface:#ffffff; --sunk:#e3e9f0; --line:#d3dce6;
+  --fg:#14202e; --muted:#5b6a7c;
+  --court:#1d4f91; --court-ink:#ffffff; --ball:#d9ea3c; --ball-ink:#1f2a05;
+  --ok:#1f8a4c; --warn:#b7791f; --bad:#c0392b;
+  --t1:#d1495b; --t2:#1d8a8a; --t3:#7b4fc9; --t4:#c7782a;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0d141d; --surface:#152130; --sunk:#1b2a3c; --line:#26384d;
+  --fg:#e6edf5; --muted:#93a3b6;
+  --court:#163c6e; --court-ink:#f2f6fb; --ball:#d4e544; --ball-ink:#1c2604;
+  --ok:#43c07a; --warn:#e3a94a; --bad:#ef6b5c;
+  --t1:#f07083; --t2:#3fbdbd; --t3:#a888f0; --t4:#ea9d52; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d141d; --surface:#152130; --sunk:#1b2a3c; --line:#26384d;
+  --fg:#e6edf5; --muted:#93a3b6;
+  --court:#163c6e; --court-ink:#f2f6fb; --ball:#d4e544; --ball-ink:#1c2604;
+  --ok:#43c07a; --warn:#e3a94a; --bad:#ef6b5c;
+  --t1:#f07083; --t2:#3fbdbd; --t3:#a888f0; --t4:#ea9d52; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45;margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--court)}
+.wrap{max-width:720px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+a{color:inherit}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--ball);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+
+/* Cabecera: la pista */
+header.band{background:var(--court);color:var(--court-ink);position:relative;overflow:hidden}
+header.band::after{content:"";position:absolute;inset:auto 0 0;height:3px;background:repeating-linear-gradient(90deg,var(--court-ink) 0 18px,transparent 18px 30px);opacity:.25}
+header .wrap{padding-block:22px 20px;display:grid;gap:10px}
+.eyebrow{font-family:var(--display);font-weight:600;letter-spacing:.14em;text-transform:uppercase;font-size:13px;opacity:.8}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(30px,8vw,44px);line-height:.95;margin:0;text-wrap:balance;letter-spacing:.01em}
+.meta{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:13px}
+.live{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.12);border-radius:99px;padding:4px 10px 4px 8px;border:0;cursor:pointer}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ball);box-shadow:0 0 0 0 var(--ball)}
+.live.on .dot{animation:pulse 2s infinite}
+.live.off .dot{background:#f0a35c}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(217,234,60,.7)}70%{box-shadow:0 0 0 7px rgba(217,234,60,0)}100%{box-shadow:0 0 0 0 rgba(217,234,60,0)}}
+@media (prefers-reduced-motion:reduce){.live.on .dot{animation:none}}
+.meta a{opacity:.85}
+
+main .wrap{padding-block:18px 40px;display:grid;gap:22px}
+section{display:grid;gap:12px}
+h2{font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:.02em;text-transform:uppercase;margin:0;display:flex;align-items:baseline;gap:10px}
+h2 small{font-family:var(--body);font-weight:500;font-size:13px;text-transform:none;letter-spacing:0;color:var(--muted)}
+
+/* Próximo partido: el marcador */
+.next{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:grid}
+.next-top{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 16px;background:var(--sunk);font-size:13px;flex-wrap:wrap}
+.next-body{display:grid;grid-template-columns:auto 1fr;gap:4px 18px;padding:16px;align-items:center}
+.clock{font-family:var(--display);font-weight:700;font-size:64px;line-height:.85;letter-spacing:.01em;grid-row:span 2}
+.next-body .who{font-weight:700;font-size:17px;min-width:0}
+.next-body .vs{color:var(--muted);min-width:0;font-size:14px}
+.countdown{font-family:var(--display);font-size:20px;font-weight:600;background:var(--ball);color:var(--ball-ink);border-radius:8px;padding:2px 10px;white-space:nowrap}
+
+/* Chips */
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;border-radius:99px;padding:2px 9px;background:var(--sunk);color:var(--fg);white-space:nowrap}
+.chip.court{font-family:var(--display);font-size:14px;letter-spacing:.04em;background:var(--court);color:var(--court-ink)}
+.chip.ok{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+.chip.bad{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
+.chip.warn{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
+.chip.live-now{background:var(--ball);color:var(--ball-ink)}
+.tdot{width:10px;height:10px;border-radius:3px;background:var(--tc);flex:none}
+
+/* Avisos */
+.alerts{display:grid;gap:8px}
+.alert{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;padding:11px 14px;border-radius:12px;border:1px solid color-mix(in srgb,var(--ac) 40%,transparent);background:color-mix(in srgb,var(--ac) 9%,var(--surface));font-size:14px}
+.alert b{display:block}
+.alert .ico{font-family:var(--display);font-weight:700;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--ac);color:var(--surface);font-size:14px;margin-top:1px}
+
+/* Parejas */
+.teams{display:grid;gap:12px}
+.team{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.team > summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:6px 1fr auto;gap:0 14px;align-items:stretch}
+.team > summary::-webkit-details-marker{display:none}
+.stripe{background:var(--tc)}
+.team-head{padding:14px 0;min-width:0;display:grid;gap:3px}
+.cat{font-family:var(--display);font-weight:600;font-size:14px;letter-spacing:.1em;text-transform:uppercase;color:var(--tc)}
+.pair{font-weight:700;font-size:16px;line-height:1.25}
+.team-next{font-size:13px;color:var(--muted)}
+.team-next strong{color:var(--fg)}
+.team-side{padding:14px 14px 14px 0;display:grid;align-content:center;justify-items:end;gap:6px;text-align:right}
+.big-time{font-family:var(--display);font-weight:700;font-size:30px;line-height:.9}
+.team-body{border-top:1px solid var(--line);padding:6px 16px 16px;display:grid;gap:14px}
+.sub{font-family:var(--display);font-weight:600;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:8px}
+
+.mrow{display:grid;grid-template-columns:62px 1fr auto;gap:12px;align-items:center;padding:10px 0;border-bottom:1px dashed var(--line)}
+.mrow:last-child{border-bottom:0}
+.when{font-family:var(--display);line-height:1;display:grid;gap:3px}
+.when .d{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.when .h{font-size:24px;font-weight:700}
+.mid{min-width:0;display:grid;gap:2px}
+.mid .rnd{font-size:12px;color:var(--muted);font-weight:600}
+.mid .opp{font-size:14px;overflow-wrap:anywhere}
+.right{display:grid;justify-items:end;gap:5px}
+.score{font-family:var(--display);font-weight:600;font-size:17px;letter-spacing:.03em}
+.mrow.maybe .when .h,.mrow.maybe .opp{opacity:.7}
+.mrow.maybe .chip.court{background:transparent;color:var(--court);box-shadow:inset 0 0 0 1.5px var(--court)}
+:root[data-theme="dark"] .mrow.maybe .chip.court{color:var(--court-ink)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .mrow.maybe .chip.court{color:var(--court-ink)}}
+
+.branches{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:460px){.branches{grid-template-columns:1fr}}
+.branch{border-radius:12px;padding:10px 12px;background:var(--sunk);display:grid;gap:4px;min-width:0}
+.branch .lbl{font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.06em;text-transform:uppercase}
+.branch.win .lbl{color:var(--ok)}
+.branch.lose .lbl{color:var(--bad)}
+.branch .bwhen{font-weight:700}
+.branch .bopp{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+
+.path{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px}
+.path .step{background:var(--sunk);border-radius:8px;padding:5px 9px;display:grid;line-height:1.2}
+.path .step b{font-family:var(--display);font-size:14px;letter-spacing:.04em}
+.path .arrow{color:var(--muted)}
+.links{display:flex;flex-wrap:wrap;gap:8px}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:7px 12px;font-size:13px;font-weight:600;text-decoration:none;cursor:pointer}
+.btn:hover{border-color:var(--court)}
+.cal{font-size:12px;font-weight:600;color:var(--court);text-decoration:none;white-space:nowrap}
+:root[data-theme="dark"] .cal{color:var(--ball)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .cal{color:var(--ball)}}
+
+/* Agenda */
+.filters{display:flex;gap:8px;flex-wrap:wrap}
+.filters button{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.filters button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.day{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:4px 16px 8px}
+.day h3{font-family:var(--display);font-weight:700;font-size:18px;letter-spacing:.06em;text-transform:uppercase;margin:10px 0 2px;display:flex;justify-content:space-between;align-items:baseline}
+.day h3 span{font-family:var(--body);font-size:12px;font-weight:500;letter-spacing:0;text-transform:none;color:var(--muted)}
+.ag{grid-template-columns:58px 1fr auto;position:relative;padding-left:12px}
+.ag::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:4px;border-radius:2px;background:var(--tc)}
+.ag.maybe::before{background:repeating-linear-gradient(180deg,var(--tc) 0 5px,transparent 5px 9px)}
+.ag .when .d{font-family:var(--display);font-size:14px;letter-spacing:.04em;color:var(--muted);font-weight:700}
+.ag .cat{font-size:12.5px}
+.ag .pair{font-size:15px}
+.ag.is-next{background:color-mix(in srgb,var(--ball) 14%,transparent);border-radius:10px;margin-inline:-8px;padding-inline:20px 8px}
+.ag.is-next::before{left:8px}
+.ag .tname{display:flex;align-items:center;gap:7px;font-weight:700;font-size:14px}
+.ag.past{opacity:.55}
+.empty{color:var(--muted);font-size:14px;padding:10px 0}
+
+footer{color:var(--muted);font-size:12.5px;display:grid;gap:6px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
+.legend .chip.court.dash{background:transparent;color:var(--muted);box-shadow:inset 0 0 0 1.5px var(--muted)}
+.skeleton{height:120px;border-radius:var(--r);background:var(--sunk)}
+</style>
+
+<header class="band">
+  <div class="wrap">
+    <div class="eyebrow" id="club">Smy Portocolom · 23–25 oct</div>
+    <h1 id="tname">Portocolom Padel &amp; Hotel Experience</h1>
+    <div class="meta">
+      <button class="live" id="live" type="button" title="Actualizar ahora"><span class="dot"></span><span id="liveText">Conectando…</span></button>
+      <a href="https://www.google.com/maps/search/?api=1&query=Smy%20Portocolom%20Padel" target="_blank" rel="noopener">Cómo llegar</a>
+      <a href="https://torneos.sportelia.es/#/tournaments-details/-P0c-Ek5aDiamycFMz6H/:embed" target="_blank" rel="noopener">Cuadro oficial</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div class="alerts" id="alerts"></div>
+
+    <section aria-labelledby="hAgenda">
+      <h2 id="hAgenda">Calendario <small>por día y hora</small></h2>
+      <div class="filters" id="filters"></div>
+      <div id="agenda" style="display:grid;gap:12px"><div class="skeleton"></div></div>
+    </section>
+
+    <footer>
+      <div class="legend">Línea continua: partido confirmado. Línea discontinua: solo si se da el resultado indicado.</div>
+      <div id="foot">Datos de Sportelia. Cada partido dura 1 hora.</div>
+    </footer>
+  </div>
+</main>
+
+<script>
+/*SNAPSHOT*/const SNAPSHOT = {"at":1792751829847,"matches":{"-P0c-Ek5aDiamycFMz6H_F4_1001":{"availabilityCount":492,"categoryId":"-P0c0KCVA9HLmbtUu-LS","nextRound":{"position_1":{"destination":"F4_6001","name":"Cuartos 1","position":1,"team":"home","type":"match"},"position_2":{"destination":"F4_6002","name":"Cuartos 2","position":2,"team":"away","type":"match"}},"num":"F4_1001","round":"P","roundOrder":1,"schedule":{"court":"-OrPQP0A2IQZHPJDcoAA","courtName":"Pista 4","day":"2026-10-23","duration":"4","hour":"hour1500","hourName":"15:00"},"serie":"Previa 1","teams":{"away":{"name":"BYE","seed":8},"home":{"inscriptionId":"-P2cOfwf3h96xcjAetPY","name":"Carol Díaz Tomás - Irene Pizà","seed":4}}},"-P0c-Ek5aDiamycFMz6H_F4_1002":{"availabilityCount":520,"categoryId":"-P0c0KCVA9HLmbtUu-LS","nextRound":{"position_1":{"destination":"F4_6002","name":"Cuartos 2","position":1,"team":"home","type":"match"},"position_2":{"destination":"F4_6001","name":"Cuartos 1","position":2,"team":"away","type":"match"}},"num":"F4_1002","round":"P","roundOrder":1,"schedule":{"court":"-OmU2QDeejZm78ep-s5Z","courtName":"Pista 1","day":"2026-10-23","duration":"4","hour":"hour1600","hourName":"16:00"},"serie":"Previa 2","teams":{"away":{"inscriptionId":"-P0ppPcQPHwzoy7GwLGo","name":"Desiree Mühlbauer - Marga A.O.","seed":1},"home":{"inscriptionId":"-P35FYsTqw0yB9xhQ5Vw","name":"Marina - Adela padel","seed":5}}},"-P0c-Ek5aDiamycFMz6H_F4_1003":{"availabilityCount":512,"categoryId":"-P0c0KCVA9HLmbtUu-LS","nextRound":{"position_1":{"destination":"F4_6003","name":"Cuartos 3","position":1,"team":"home","type":"match"},"position_2":{"destination":"F4_6004","name":"Cuartos 4","position":2,"team":"away","type":"match"}},"num":"F4_1003","round":"P","roundOrder":1,"schedule":{"court":"-OmU2Qz0A7-tZHGWlfcA","courtName":"Pista 2","day":"2026-10-23","duration":"4","hour":"hour1700","hourName":"17:00"},"serie":"Previa 3","teams":{"away":{"inscriptionId":"-P100d-rbN-eiFv2MyhL","name":"Patricia - Monica","seed":2},"home":{"inscriptionId":"-P3FDHxKDlIlEO5pskNz","name":"Marina Galmes - Carme Vives","seed":6}}},"-P0c-Ek5aDiamycFMz6H_F4_1004":{"availabilityCount":592,"categoryId":"-P0c0KCVA9HLmbtUu-LS","nextRound":{"position_1":{"destination":"F4_6004","name":"Cuartos 4","position":1,"team":"home","type":"match"},"position_2":{"destination":"F4_6003","name":"Cuartos 3","position":2,"team":"away","type":"match"}},"num":"F4_1004","round":"P","roundOrder":1,"schedule":{"court":"-OmU2Qz0A7-tZHGWlfcA","courtName":"Pista 2","day":"2026-10-23","duration":"4","hour":"hour2200","hourName":"22:00"},"serie":"Previa 4","teams":{"away":{"inscriptionId":"-P3Lbl2ZFD7-6ePDXJ8X","name":"Lidia Expósito Ruiz - Cati Caldentey Vicens","seed":7},"home":{"inscriptionId":"-P1p-ZE1MeYNDoawDZQ3","name":"Aletsia - Carme Ribas Llabres","seed":3}}},"-P0c-Ek5aDiamycFMz6H_F4_6001":{"availabilityCount":656,"categoryId":"-P0c0KCVA9HLmbtUu-LS","consolation":false,"nextRound":{"position_1":{"destination":"F4_7001","name":"Semifinal 1","position":1,"team":"home","type":"match"}},"num":"F4_6001","round":"Q","roundOrder":6,"schedule":{"court":"-OmU2Qz0A7-tZHGWlfcA","courtName":"Pista 2","day":"2026-10-24","duration":"4","hour":"hour1700","hourName":"17:00"},"serie":"Cuartos 1","style":{"height":"inherit","heightSep":20,"left":"0","matchOrder":0,"position":"relative","roundOrder":1,"top":"0","width":"inherit"},"teams":{"away":{"name":"Perdedor de Previa 2","previousRound":{"name":"Perdedor de Previa 2","position":2,"source":"F4_1002","type":"match"},"seed":8},"home":{"name":"Ganador de Previa 1","previousRound":{"name":"Ganador de Previa 1","position":1,"source":"F4_1001","type":"match"},"seed":1}}},"-P0c-Ek5aDiamycFMz6H_F4_6002":{"availabilityCount":656,"categoryId":"-P0c0KCVA9HLmbtUu-LS","consolation":false,"nextRound":{"position_1":{"destination":"F4_7002","name":"Semifinal 2","position":1,"team":"home","type":"match"}},"num":"F4_6002","round":"Q","roundOrder":6,"schedule":{"court":"-OrPQOO38TKfKXBZra0b","courtName":"Pista 3","day":"2026-10-24","duration":"4","hour":"hour1600","hourName":"16:00"},"serie":"Cuartos 2","style":{"height":"inherit","heightSep":820,"left":"0","matchOrder":2,"position":"relative","roundOrder":1,"top":"0","width":"inherit"},"teams":{"away":{"name":"Perdedor de Previa 1","previousRound":{"name":"Perdedor de Previa 1","position":2,"source":"F4_1001","type":"match"},"seed":7},"home":{"name":"Ganador de Previa 2","previousRound":{"name":"Ganador de Previa 2","position":1,"source":"F4_1002","type":"match"},"seed":2}}},"-P0c-Ek5aDiamycFMz6H_F4_6003":{"availabilityCount":656,"categoryId":"-P0c0KCVA9HLmbtUu-LS","consolation":false,"nextRound":{"position_1":{"destination":"F4_7002","name":"Semifinal 2","position":1,"team":"away","type":"match"}},"num":"F4_6003","round":"Q","roundOrder":6,"schedule":{"court":"-OrPQP0A2IQZHPJDcoAA","courtName":"Pista 4","day":"2026-10-24","duration":"4","hour":"hour1500","hourName":"15:00"},"serie":"Cuartos 3","style":{"height":"inherit","heightSep":1220,"left":"0","matchOrder":3,"position":"relative","roundOrder":1,"top":"0","width":"inherit"},"teams":{"away":{"name":"Perdedor de Previa 4","previousRound":{"name":"Perdedor de Previa 4","position":2,"source":"F4_1004","type":"match"},"seed":6},"home":{"name":"Ganador de Previa 3","previousRound":{"name":"Ganador de Previa 3","position":1,"source":"F4_1003","type":"match"},"seed":3}}},"-P0c-Ek5aDiamycFMz6H_F4_6004":{"availabilityCount":656,"categoryId":"-P0c0KCVA9HLmbtUu-LS","consolation":false,"nextRound":{"position_1":{"destination":"F4_7001","name":"Semifinal 1","position":1,"team":"away","type":"match"}},"num":"F4_6004","round":"Q","roundOrder":6,"schedule":{"court":"-OmU2QDeejZm78ep-s5Z","courtName":"Pista 1","day":"2026-10-24","duration":"4","hour":"hour1600","hourName":"16:00"},"serie":"Cuartos 4","style":{"height":"inherit","heightSep":420,"left":"0","matchOrder":1,"position":"relative","roundOrder":1,"top":"0","width":"inherit"},"teams":{"away":{"name":"Perdedor de Previa 3","previousRound":{"name":"Perdedor de Previa 3","position":2,"source":"F4_1003","type":"match"},"seed":5},"home":{"name":"Ganador de Previa 4","previousRound":{"name":"Ganador de Previa 4","position":1,"source":"F4_1004","type":"match"},"seed":4}}},"-P0c-Ek5aDiamycFMz6H_F4_7001":{"availabilityCount":656,"categoryId":"-P0c0KCVA9HLmbtUu-LS","consolation":false,"nextRound":{"position_1":{"destination":"F4_8001","name":"Final","position":1,"team":"home","type":"match"}},"num":"F4_7001","round":"S","roundOrder":7,"schedule":{"court":"-OrPQOO38TKfKXBZra0b","courtName":"Pista 3","day":"2026-10-25","duration":"4","hour":"hour0900","hourName":"09:00"},"serie":"Semifinal 1","style":{"height":"inherit","heightSep":20,"left":"0","matchOrder":0,"position":"relative","roundOrder":2,"top":"0","width":"inherit"},"teams":{"away":{"name":"Ganador de Cuartos 4","previousRound":{"name":"Ganador de Cuartos 4","position":1,"source":"F4_6004","type":"match"}},"home":{"name":"Ganador de Cuartos 1","previousRound":{"name":"Ganador de Cuartos 1","position":1,"source":"F4_6001","type":"match"}}}},"-P0c-Ek5aDiamycFMz6H_F4_7002":{"availabilityCount":656,"categoryId":"-P0c0KCVA9HLmbtUu-LS","consolation":false,"nextRound":{"position_1":{"destination":"F4_8001","name":"Final","position":1,"team":"away","type":"match"}},"num":"F4_7002","round":"S","roundOrder":7,"schedule":{"court":"-OrPQP0A2IQZHPJDcoAA","courtName":"Pista 4","day":"2026-10-25","duration":"4","hour":"hour0900","hourName":"09:00"},"serie":"Semifinal 2","style":{"height":"inherit","heightSep":820,"left":"0","matchOrder":1,"position":"relative","roundOrder":2,"top":"0","width":"inherit"},"teams":{"away":{"name":"Ganador de Cuartos 3","previousRound":{"name":"Ganador de Cuartos 3","position":1,"source":"F4_6003","type":"match"}},"home":{"name":"Ganador de Cuartos 2","previousRound":{"name":"Ganador de Cuartos 2","position":1,"source":"F4_6002","type":"match"}}}},"-P0c-Ek5aDiamycFMz6H_F4_8001":{"availabilityCount":656,"categoryId":"-P0c0KCVA9HLmbtUu-LS","consolation":false,"num":"F4_8001","round":"F","roundOrder":8,"schedule":{"court":"-OmU2QDeejZm78ep-s5Z","courtName":"Pista 1","day":"2026-10-25","duration":"4","hour":"hour1300","hourName":"13:00"},"serie":"Final","style":{"height":"inherit","heightSep":20,"left":"0","matchOrder":0,"position":"relative","roundOrder":3,"top":"0","width":"inherit"},"teams":{"away":{"name":"Ganador de Semifinal 2","previousRound":{"name":"Ganador de Semifinal 2","position":1,"source":"F4_7002","type":"match"}},"home":{"name":"Ganador de Semifinal 1","previousRound":{"name":"Ganador de Semifinal 1","position":1,"source":"F4_7001","type":"match"}}}},"-P0c-Ek5aDiamycFMz6H_M4_1001":{"availabilityCount":408,"categoryId":"-P0c0KCWF3GxfJfqdRVI","nextRound":{"position_1":{"destination":"M4_6001","name":"Cuartos 1","position":1,"team":"home","type":"match"},"position_2":{"destination":"M4_5003","name":"Octavos 3","position":2,"team":"away","type":"match"}},"num":"M4_1001","round":"P","roundOrder":1,"schedule":{"court":"-OmU2QDeejZm78ep-s5Z","courtName":"Pista 1","day":"2026-10-23","duration":"4","hour":"hour2200","hourName":"22:00"},"serie":"Previa 1","teams":{"away":{"inscriptionId":"-P11tM8PGeMnxLFdUnUC","name":"Tomeu Vich - J .Rotger","seed":3},"home":{"inscriptionId":"-P2oRgX4upwUEnFl-7YJ","name":"Carsten - Alexander Bocks ","seed":7}}},"-P0c-Ek5aDiamycFMz6H_M4_1002":{"availabilityCount":508,"categoryId":"-P0c0KCWF3GxfJfqdRVI","nextRound":{"position_1":{"destination":"M4_6002","name":"Cuartos 2","position":1,"team":"home","type":"match"},"position_2":{"destination":"M4_5004","name":"Octavos 4","position":2,"team":"away","type":"match"}},"num":"M4_1002","round":"P","roundOrder":1,"schedule":{"court":"-OrPQOO38TKfKXBZra0b","courtName":"Pista 3","day":"2026-10-23","duration":"4","hour":"hour1500","hourName":"15:00"},"serie":"Previa 2","style":{"height":"inherit","heightSep":3220,"left":"0","matchOrder":16,"position":"relative","roundOrder":0,"top":"0","width":"inherit"},"teams":{"away":{"availabilityText":"","inscriptionId":"-P0kgx5L1xiN4e856Lzz","name":"Damià Salom - Luis Valverde","seed":2},"home":{"name":"Bye"}}},"-P0c-Ek5aDiamycFMz6H_M4_1003":{"availabilityCount":552,"categoryId":"-P0c0KCWF3GxfJfqdRVI","nextRound":{"position_1":{"destination":"M4_5003","name":"Octavos 3","position":1,"team":"home","type":"match"},"position_2":{"destination":"M4_5005","name":"Octavos 5","position":2,"team":"away","type":"match"}},"num":"M4_1003","round":"P","roundOrder":1,"schedule":{"court":"-OrPQP0A2IQZHPJDcoAA","courtName":"Pista 4","day":"2026-10-23","duration":"4","hour":"hour2000","hourName":"20:00"},"serie":"Previa 3","teams":{"away":{"inscriptionId":"-P1lCA1l9kJ-LCoFh_Mr","name":"Thierry BRUNET - Franck ROLLAIS","seed":4},"home":{"inscriptionId":"-P3pjXbP-EJ-EixWoStp","name":"Jaume Francesc - Mateo González","seed":11}}},"-P0c-Ek5aDiamycFMz6H_M4_1004":{"availabilityCount":488,"categoryId":"-P0c0KCWF3GxfJfqdRVI","nextRound":{"position_1":{"destination":"M4_5004","name":"Octavos 4","position":1,"team":"home","type":"match"},"position_2":{"destination":"M4_5006","name":"Octavos 6","position":2,"team":"away","type":"match"}},"num":"M4_1004","round":"P","roundOrder":1,"schedule":{"court":"-OmU2Qz0A7-tZHGWlfcA","courtName":"Pista 2","day":"2026-10-23","duration":"4","hour":"hour1900","hourName":"19:00"},"serie":"Previa 4","teams":{"away":{"inscriptionId":"-P0cqMKcMilnPqwzFHFX","name":"Xisco R - Victor","seed":1},"home":{"inscriptionId":"-P3C3YNyDHcBN1V7RgJA","name":"Yann Tetreau - Teresio Italia","seed":9}}},"-P0c-Ek5aDiamycFMz6H_M4_1005":{"availabilityCount":592,"categoryId":"-P0c0KCWF3GxfJfqdRVI","nextRound":{"position_1":{"destination":"M4_5005","name":"Octavos 5","position":1,"team":"home","type":"match"},"position_2":{"destination":"M4_5007","name":"Octavos 7","position":2,"team":"away","type":"match"}},"num":"M4_1005","round":"P","roundOrder":1,"schedule":{"court":"-OmU2Qz0A7-tZHGWlfcA","courtName":"Pista 2","day":"2026-10-23","duration":"4","hour":"hour1600","hourName":"16:00"},"serie":"Previa 5","teams":{"away":{"inscriptionId":"-P1zintpzEinhbPLjb41","name":"Jaume Alorda - Joaquin Costa","seed":5},"home":{"inscriptionId":"-P49IqPWehy8jHVsDqW2","name":"David García - Toni Barea","seed":14}}},"-P0c-Ek5aDiamycFMz6H_M4_1006":{"availabilityCount":612,"categoryId":"-P0c0KCWF3GxfJfqdRVI","nextRound":{"position_1":{"destination":"M4_5006","name":"Octavos 6","position":1,"team":"home","type":"match"},"position_2":{"destination":"M4_5008","name":"Octavos 8","position":2,"team":"away","type":"match"}},"num":"M4_1006","round":"P","roundOrder":1,"schedule":{"court":"-OmU2QDeejZm78ep-s5Z","courtName":"Pista 1","day":"2026-10-23","duration":"4","hour":"hour1500","hourName":"15:00"},"serie":"Previa 6","teams":{"away":{"inscriptionId":"-P3kF7p0CMoVp5rIYApR","name":"Jose Sa Cleda - Pedro leandro","seed":10},"home":{"inscriptionId":"-P2x3QWksB9ojRk52UE0","name":"Max Padel - Juanma Guerrero","seed":8}}},"-P0c-Ek5aDiamycFMz6H_M4_1007":{"availabilityCount":544,"categoryId":"-P0c0KCWF3GxfJfqdRVI","nextRound":{"position_1":{"destination":"M4_5007","name":"Octavos 7","position":1,"team":"home","type":"match"},"position_2":{"destination":"M4_5008","name":"Octavos 8","position":2,"team":"home","type":"match"}},"num":"M4_1007","round":"P","roundOrder":1,"schedule":{"court":"-OrPQOO38TKfKXBZra0b","courtName":"Pista 3","day":"2026-10-23","duration":"4","hour":"hour1830","hourName":"18:30"},"serie":"Previa 7","teams":{"away":{"inscriptionId":"-P49FQBLKbCiw39yC7Rs","name":"Carmen Gaitán - Daniel Sarmiento","seed":13},"home":{"inscriptionId":"-P2PXWi66ZPVS1rioqCQ","name":"Joan Marí - Miquel Àngel Amorós ","seed":6}}},"-P0c-Ek5aDiamycFMz6H_M4_5003":{"availabilityCount":656,"categoryId":"-P0c0KCWF3GxfJfqdRVI","consolation":false,"nextRound":{"position_1":{"destination":"M4_6003","name":"Cuartos 3","position":1,"team":"home","type":"match"}},"num":"M4_5003","round":"R8","roundOrder":5,"schedule":{"court":"-OmU2Qz0A7-tZHGWlfcA","courtName":"Pista 2","day":"2026-10-24","duration":"4","hour":"hour1300","hourName":"13:00"},"serie":"Octavos 3","style":{"height":"inherit","heightSep":1220,"left":"0","matchOrder":6,"position":"relative","roundOrder":0,"top":"0","width":"inherit"},"teams":{"away":{"name":"Perdedor de Previa 1","previousRound":{"name":"Perdedor de Previa 1","position":2,"source":"M4_1001","type":"match"},"seed":14},"home":{"name":"Ganador de Previa 3","previousRound":{"name":"Ganador de Previa 3","position":1,"source":"M4_1003","type":"match"},"seed":3}}},"-P0c-Ek5aDiamycFMz6H_M4_5004":{"availabilityCount":656,"categoryId":"-P0c0KCWF3GxfJfqdRVI","consolation":false,"nextRound":{"position_1":{"destination":"M4_6004","name":"Cuartos 4","position":1,"team":"home","type":"match"}},"num":"M4_5004","round":"R8","roundOrder":5,"schedule":{"court":"-OmU2Qz0A7-tZHGWlfcA","courtName":"Pista 2","day":"2026-10-24","duration":"4","hour":"hour1200","hourName":"12:00"},"serie":"Octavos 4","style":{"height":"inherit","heightSep":420,"left":"0","matchOrder":2,"position":"relative","roundOrder":0,"top":"0","width":"inherit"},"teams":{"away":{"name":"Perdedor de Previa 2","previousRound":{"name":"Perdedor de Previa 2","position":2,"source":"M4_1002","type":"match"},"seed":13},"home":{"name":"Ganador de Previa 4","previousRound":{"name":"Ganador de Previa 4","position":1,"source":"M4_1004","type":"match"},"seed":4}}},"-P0c-Ek5aDiamycFMz6H_M4_5005":{"availabilityCount":656,"categoryId":"-P0c0KCWF3GxfJfqdRVI","consolation":false,"nextRound":{"position_1":{"destination":"M4_6004","name":"Cuartos 4","position":1,"team":"away","type":"match"}},"num":"M4_5005","round":"R8","roundOrder":5,"schedule":{"court":"-OrPQOO38TKfKXBZra0b","courtName":"Pista 3","day":"2026-10-24","duration":"4","hour":"hour1300","hourName":"13:00"},"serie":"Octavos 5","style":{"height":"inherit","heightSep":620,"left":"0","matchOrder":3,"position":"relative","roundOrder":0,"top":"0","width":"inherit"},"teams":{"away":{"name":"Perdedor de Previa 3","previousRound":{"name":"Perdedor de Previa 3","position":2,"source":"M4_1003","type":"match"},"seed":12},"home":{"name":"Ganador de Previa 5","previousRound":{"name":"Ganador de Previa 5","position":1,"source":"M4_1005","type":"match"},"seed":5}}},"-P0c-Ek5aDiamycFMz6H_M4_5006":{"availabilityCount":656,"categoryId":"-P0c0KCWF3GxfJfqdRVI","consolation":false,"nextRound":{"position_1":{"destination":"M4_6003","name":"Cuartos 3","position":1,"team":"away","type":"match"}},"num":"M4_5006","round":"R8","roundOrder":5,"schedule":{"court":"-OrPQP0A2IQZHPJDcoAA","courtName":"Pista 4","day":"2026-10-24","duration":"4","hour":"hour1200","hourName":"12:00"},"serie":"Octavos 6","style":{"height":"inherit","heightSep":1420,"left":"0","matchOrder":7,"position":"relative","roundOrder":0,"top":"0","width":"inherit"},"teams":{"away":{"name":"Perdedor de Previa 4","previousRound":{"name":"Perdedor de Previa 4","position":2,"source":"M4_1004","type":"match"},"seed":11},"home":{"name":"Ganador de Previa 6","previousRound":{"name":"Ganador de Previa 6","position":1,"source":"M4_1006","type":"match"},"seed":6}}},"-P0c-Ek5aDiamycFMz6H_M4_5007":{"availabilityCount":656,"categoryId":"-P0c0KCWF3GxfJfqdRVI","consolation":false,"nextRound":{"position_1":{"destination":"M4_6002","name":"Cuartos 2","position":1,"team":"away","type":"match"}},"num":"M4_5007","round":"R8","roundOrder":5,"schedule":{"court":"-OrPQOO38TKfKXBZra0b","courtName":"Pista 3","day":"2026-10-24","duration":"4","hour":"hour1000","hourName":"10:00"},"serie":"Octavos 7","style":{"height":"inherit","heightSep":1020,"left":"0","matchOrder":5,"position":"relative","roundOrder":0,"top":"0","width":"inherit"},"teams":{"away":{"name":"Perdedor de Previa 5","previousRound":{"name":"Perdedor de Previa 5","position":2,"source":"M4_1005","type":"match"},"seed":10},"home":{"name":"Ganador de Previa 7","previousRound":{"name":"Ganador de Previa 7","position":1,"source":"M4_1007","type":"match"},"seed":7}}},"-P0c-Ek5aDiamycFMz6H_M4_5008":{"availabilityCount":656,"categoryId":"-P0c0KCWF3GxfJfqdRVI","consolation":false,"nextRound":{"position_1":{"destination":"M4_6001","name":"Cuartos 1","position":1,"team":"away","type":"match"}},"num":"M4_5008","round":"R8","roundOrder":5,"schedule":{"court":"-OmU2Qz0A7-tZHGWlfcA","courtName":"Pista 2","day":"2026-10-24","duration":"4","hour":"hour1100","hourName":"11:00"},"serie":"Octavos 8","style":{"height":"inherit","heightSep":220,"left":"0","matchOrder":1,"position":"relative","roundOrder":0,"top":"0","width":"inherit"},"teams":{"away":{"name":"Perdedor de Previa 6","previousRound":{"name":"Perdedor de Previa 6","position":2,"source":"M4_1006","type":"match"},"seed":9},"home":{"name":"Perdedor de Previa 7","previousRound":{"name":"Perdedor de Previa 7","position":2,"source":"M4_1007","type":"match"},"seed":8}}},"-P0c-Ek5aDiamycFMz6H_M4_6001":{"availabilityCount":656,"categoryId":"-P0c0KCWF3GxfJfqdRVI","consolation":false,"nextRound":{"position_1":{"destination":"M4_7001","name":"Semifinal 1","position":1,"team":"home","type":"match"}},"num":"M4_6001","round":"Q","roundOrder":6,"schedule":{"court":"-OrPQOO38TKfKXBZra0b","courtName":"Pista 3","day":"2026-10-24","duration":"4","hour":"hour1900","hourName":"19:00"},"serie":"Cuartos 1","style":{"height":"inherit","heightSep":20,"left":"0","matchOrder":0,"position":"relative","roundOrder":1,"top":"0","width":"inherit"},"teams":{"away":{"name":"Ganador de Octavos 8","previousRound":{"name":"Ganador de Octavos 8","position":1,"source":"M4_5008","type":"match"}},"home":{"name":"Ganador de Previa 1","previousRound":{"name":"Ganador de Previa 1","position":1,"source":"M4_1001","type":"match"},"seed":1}}},"-P0c-Ek5aDiamycFMz6H_M4_6002":{"availabilityCount":656,"categoryId":"-P0c0KCWF3GxfJfqdRVI","consolation":false,"nextRound":{"position_1":{"destination":"M4_7002","name":"Semifinal 2","position":1,"team":"home","type":"match"}},"num":"M4_6002","round":"Q","roundOrder":6,"schedule":{"court":"-OmU2QDeejZm78ep-s5Z","courtName":"Pista 1","day":"2026-10-24","duration":"4","hour":"hour2100","hourName":"21:00"},"serie":"Cuartos 2","style":{"height":"inherit","heightSep":820,"left":"0","matchOrder":2,"position":"relative","roundOrder":1,"top":"0","width":"inherit"},"teams":{"away":{"name":"Ganador de Octavos 7","previousRound":{"name":"Ganador de Octavos 7","position":1,"source":"M4_5007","type":"match"}},"home":{"name":"Ganador de Previa 2","previousRound":{"name":"Ganador de Previa 2","position":1,"source":"M4_1002","type":"match"},"seed":2}}},"-P0c-Ek5aDiamycFMz6H_M4_6003":{"availabilityCount":656,"categoryId":"-P0c0KCWF3GxfJfqdRVI","consolation":false,"nextRound":{"position_1":{"destination":"M4_7002","name":"Semifinal 2","position":1,"team":"away","type":"match"}},"num":"M4_6003","round":"Q","roundOrder":6,"schedule":{"court":"-OrPQP0A2IQZHPJDcoAA","courtName":"Pista 4","day":"2026-10-24","duration":"4","hour":"hour1800","hourName":"18:00"},"serie":"Cuartos 3","style":{"height":"inherit","heightSep":1220,"left":"0","matchOrder":3,"position":"relative","roundOrder":1,"top":"0","width":"inherit"},"teams":{"away":{"name":"Ganador de Octavos 6","previousRound":{"name":"Ganador de Octavos 6","position":1,"source":"M4_5006","type":"match"}},"home":{"name":"Ganador de Octavos 3","previousRound":{"name":"Ganador de Octavos 3","position":1,"source":"M4_5003","type":"match"}}}},"-P0c-Ek5aDiamycFMz6H_M4_6004":{"availabilityCount":656,"categoryId":"-P0c0KCWF3GxfJfqdRVI","consolation":false,"nextRound":{"position_1":{"destination":"M4_7001","name":"Semifinal 1","position":1,"team":"away","type":"match"}},"num":"M4_6004","round":"Q","roundOrder":6,"schedule":{"court":"-OmU2Qz0A7-tZHGWlfcA","courtName":"Pista 2","day":"2026-10-24","duration":"4","hour":"hour1900","hourName":"19:00"},"serie":"Cuartos 4","style":{"height":"inherit","heightSep":420,"left":"0","matchOrder":1,"position":"relative","roundOrder":1,"top":"0","width":"inherit"},"teams":{"away":{"name":"Ganador de Octavos 5","previousRound":{"name":"Ganador de Octavos 5","position":1,"source":"M4_5005","type":"match"}},"home":{"name":"Ganador de Octavos 4","previousRound":{"name":"Ganador de Octavos 4","position":1,"source":"M4_5004","type":"match"}}}},"-P0c-Ek5aDiamycFMz6H_M4_7001":{"availabilityCount":656,"categoryId":"-P0c0KCWF3GxfJfqdRVI","consolation":false,"nextRound":{"position_1":{"destination":"M4_8001","name":"Final","position":1,"team":"home","type":"match"}},"num":"M4_7001","round":"S","roundOrder":7,"schedule":{"court":"-OmU2Qz0A7-tZHGWlfcA","courtName":"Pista 2","day":"2026-10-25","duration":"4","hour":"hour1100","hourName":"11:00"},"serie":"Semifinal 1","style":{"height":"inherit","heightSep":20,"left":"0","matchOrder":0,"position":"relative","roundOrder":2,"top":"0","width":"inherit"},"teams":{"away":{"name":"Ganador de Cuartos 4","previousRound":{"name":"Ganador de Cuartos 4","position":1,"source":"M4_6004","type":"match"}},"home":{"name":"Ganador de Cuartos 1","previousRound":{"name":"Ganador de Cuartos 1","position":1,"source":"M4_6001","type":"match"}}}},"-P0c-Ek5aDiamycFMz6H_M4_7002":{"availabilityCount":656,"categoryId":"-P0c0KCWF3GxfJfqdRVI","consolation":false,"nextRound":{"position_1":{"destination":"M4_8001","name":"Final","position":1,"team":"away","type":"match"}},"num":"M4_7002","round":"S","roundOrder":7,"schedule":{"court":"-OrPQOO38TKfKXBZra0b","courtName":"Pista 3","day":"2026-10-25","duration":"4","hour":"hour1100","hourName":"11:00"},"serie":"Semifinal 2","style":{"height":"inherit","heightSep":820,"left":"0","matchOrder":1,"position":"relative","roundOrder":2,"top":"0","width":"inherit"},"teams":{"away":{"name":"Ganador de Cuartos 3","previousRound":{"name":"Ganador de Cuartos 3","position":1,"source":"M4_6003","type":"match"}},"home":{"name":"Ganador de Cuartos 2","previousRound":{"name":"Ganador de Cuartos 2","position":1,"source":"M4_6002","type":"match"}}}},"-P0c-Ek5aDiamycFMz6H_M4_8001":{"availabilityCount":656,"categoryId":"-P0c0KCWF3GxfJfqdRVI","consolation":false,"num":"M4_8001","round":"F","roundOrder":8,"schedule":{"court":"-OmU2QDeejZm78ep-s5Z","courtName":"Pista 1","day":"2026-10-25","duration":"4","hour":"hour1400","hourName":"14:00"},"serie":"Final","style":{"height":"inherit","heightSep":20,"left":"0","matchOrder":0,"position":"relative","roundOrder":3,"top":"0","width":"inherit"},"teams":{"away":{"name":"Ganador de Semifinal 2","previousRound":{"name":"Ganador de Semifinal 2","position":1,"source":"M4_7002","type":"match"}},"home":{"name":"Ganador de Semifinal 1","previousRound":{"name":"Ganador de Semifinal 1","position":1,"source":"M4_7001","type":"match"}}}},"-P0c-Ek5aDiamycFMz6H_M5_1001":{"availabilityCount":300,"categoryId":"-P0c0KCWF3GxfJfqdRVJ","nextRound":{"position_1":{"destination":"M5_6001","name":"Cuartos 1","position":1,"team":"home","type":"match"},"position_2":{"destination":"M5_5006","name":"Octavos 6","position":2,"team":"away","type":"match"}},"num":"M5_1001","round":"P","roundOrder":1,"schedule":{"court":"-OmU2QDeejZm78ep-s5Z","courtName":"Pista 1","day":"2026-10-23","duration":"4","hour":"hour1700","hourName":"17:00"},"serie":"Previa 1","teams":{"away":{"inscriptionId":"-P3HlT3QrmredeHhNNzv","name":"Borja  Garcia Exposito - Alejandro","seed":11},"home":{"inscriptionId":"-P4FG7hBBW7MgzCKj-HE","name":"Tomeu Rosselló - Cynthia González","seed":12}}},"-P0c-Ek5aDiamycFMz6H_M5_1002":{"availabilityCount":436,"categoryId":"-P0c0KCWF3GxfJfqdRVJ","nextRound":{"position_1":{"destination":"M5_6002","name":"Cuartos 2","position":1,"team":"home","type":"match"},"position_2":{"destination":"M5_5005","name":"Octavos 5","position":2,"team":"away","type":"match"}},"num":"M5_1002","round":"P","roundOrder":1,"schedule":{"court":"-OmU2Qz0A7-tZHGWlfcA","courtName":"Pista 2","day":"2026-10-24","duration":"4","hour":"hour0900","hourName":"09:00"},"serie":"Previa 2","teams":{"away":{"inscriptionId":"-P1KcDP7jGlyqw9FWBOb","name":"CARLOS ANTON - Andres Isern","seed":6},"home":{"inscriptionId":"-P1KbsZOl3cZVA-TzMhY","name":"JUAN AGUILAR - MIGUEL LOPEZ","seed":5}}},"-P0c-Ek5aDiamycFMz6H_M5_1003":{"availabilityCount":536,"categoryId":"-P0c0KCWF3GxfJfqdRVJ","nextRound":{"position_1":{"destination":"M5_6003","name":"Cuartos 3","position":1,"team":"home","type":"match"},"position_2":{"destination":"M5_5008","name":"Octavos 8","position":2,"team":"away","type":"match"}},"num":"M5_1003","round":"P","roundOrder":1,"schedule":{"court":"-OrPQOO38TKfKXBZra0b","courtName":"Pista 3","day":"2026-10-23","duration":"4","hour":"hour1730","hourName":"17:30"},"serie":"Previa 3","style":{"height":"inherit","heightSep":4820,"left":"0","matchOrder":24,"position":"relative","roundOrder":0,"top":"0","width":"inherit"},"teams":{"away":{"availabilityText":"V-15+17; ","inscriptionId":"-P14a1yEd023WunMYm0w","name":"Javier Cañellas - Marc cañellas","seed":4},"home":{"availabilityText":"V-15+17:30; S+12; ","inscriptionId":"-P0iwI8Z8uOmyK-xY-Ov","name":"Tito toni - Papi Toni Antonio Juárez Tomás","seed":2}}},"-P0c-Ek5aDiamycFMz6H_M5_1004":{"availabilityCount":512,"categoryId":"-P0c0KCWF3GxfJfqdRVJ","nextRound":{"position_1":{"destination":"M5_6004","name":"Cuartos 4","position":1,"team":"home","type":"match"},"position_2":{"destination":"M5_5007","name":"Octavos 7","position":2,"team":"away","type":"match"}},"num":"M5_1004","round":"P","roundOrder":1,"schedule":{"court":"-OrPQOO38TKfKXBZra0b","courtName":"Pista 3","day":"2026-10-23","duration":"4","hour":"hour1930","hourName":"19:30"},"serie":"Previa 4","teams":{"away":{"inscriptionId":"-P3ACXpX7m-3oDvjx1vF","name":"MATIAS FERNANDEZ - Guillermo","seed":9},"home":{"inscriptionId":"-P1aFpewb-YvvZjhrKYz","name":"Javier Andrés - Miguel Gascón ","seed":7}}},"-P0c-Ek5aDiamycFMz6H_M5_1005":{"availabilityCount":608,"categoryId":"-P0c0KCWF3GxfJfqdRVJ","nextRound":{"position_1":{"destination":"M5_5005","name":"Octavos 5","position":1,"team":"home","type":"match"},"position_2":{"destination":"M5_5007","name":"Octavos 7","position":2,"team":"home","type":"match"}},"num":"M5_1005","round":"P","roundOrder":1,"schedule":{"court":"-OrPQP0A2IQZHPJDcoAA","courtName":"Pista 4","day":"2026-10-24","duration":"4","hour":"hour1000","hourName":"10:00"},"serie":"Previa 5","style":{"height":"inherit","heightSep":2420,"left":"0","matchOrder":12,"position":"relative","roundOrder":0,"top":"0","width":"inherit"},"teams":{"away":{"availabilityText":"","inscriptionId":"-P2A3wYghXYNf6cl5a-D","name":"Esmeraldo Diaz - Francisco Rotger Font","seed":8},"home":{"availabilityText":"V-15+17; S+10; D+10; ","inscriptionId":"-P0gibkQbSjYBuwa1-Ja","name":"Marta Juárez - Bartomeu Rafel","seed":1}}},"-P0c-Ek5aDiamycFMz6H_M5_1006":{"availabilityCount":656,"categoryId":"-P0c0KCWF3GxfJfqdRVJ","nextRound":{"position_1":{"destination":"M5_5006","name":"Octavos 6","position":1,"team":"home","type":"match"},"position_2":{"destination":"M5_5008","name":"Octavos 8","position":2,"team":"home","type":"match"}},"num":"M5_1006","round":"P","roundOrder":1,"schedule":{"court":"-OrPQP0A2IQZHPJDcoAA","courtName":"Pista 4","day":"2026-10-23","duration":"4","hour":"hour1600","hourName":"16:00"},"serie":"Previa 6","style":{"height":"inherit","heightSep":5620,"left":"0","matchOrder":28,"position":"relative","roundOrder":0,"top":"0","width":"inherit"},"teams":{"away":{"availabilityText":"","inscriptionId":"-P3H93-7cGGdu7IUZjy9","name":"Aitor Sarda - Andreu Bennassar","seed":10},"home":{"availabilityText":"","inscriptionId":"-P11F-FbfbFhMT7bZTfZ","name":"Jesus Pons - Daniel Morera","seed":3}}},"-P0c-Ek5aDiamycFMz6H_M5_5005":{"availabilityCount":656,"categoryId":"-P0c0KCWF3GxfJfqdRVJ","consolation":false,"nextRound":{"position_1":{"destination":"M5_6004","name":"Cuartos 4","position":1,"team":"away","type":"match"}},"num":"M5_5005","round":"R8","roundOrder":5,"schedule":{"court":"-OrPQP0A2IQZHPJDcoAA","courtName":"Pista 4","day":"2026-10-24","duration":"4","hour":"hour1300","hourName":"13:00"},"serie":"Octavos 5","style":{"height":"inherit","heightSep":620,"left":"0","matchOrder":3,"position":"relative","roundOrder":0,"top":"0","width":"inherit"},"teams":{"away":{"name":"Perdedor de Previa 2","previousRound":{"name":"Perdedor de Previa 2","position":2,"source":"M5_1002","type":"match"},"seed":12},"home":{"name":"Ganador de Previa 5","previousRound":{"name":"Ganador de Previa 5","position":1,"source":"M5_1005","type":"match"},"seed":5}}},"-P0c-Ek5aDiamycFMz6H_M5_5006":{"availabilityCount":656,"categoryId":"-P0c0KCWF3GxfJfqdRVJ","consolation":false,"nextRound":{"position_1":{"destination":"M5_6003","name":"Cuartos 3","position":1,"team":"away","type":"match"}},"num":"M5_5006","round":"R8","roundOrder":5,"schedule":{"court":"-OrPQOO38TKfKXBZra0b","courtName":"Pista 3","day":"2026-10-23","duration":"4","hour":"hour2130","hourName":"21:30"},"serie":"Octavos 6","style":{"height":"inherit","heightSep":1420,"left":"0","matchOrder":7,"position":"relative","roundOrder":0,"top":"0","width":"inherit"},"teams":{"away":{"name":"Perdedor de Previa 1","previousRound":{"name":"Perdedor de Previa 1","position":2,"source":"M5_1001","type":"match"},"seed":11},"home":{"name":"Ganador de Previa 6","previousRound":{"name":"Ganador de Previa 6","position":1,"source":"M5_1006","type":"match"},"seed":6}}},"-P0c-Ek5aDiamycFMz6H_M5_5007":{"availabilityCount":656,"categoryId":"-P0c0KCWF3GxfJfqdRVJ","consolation":false,"nextRound":{"position_1":{"destination":"M5_6002","name":"Cuartos 2","position":1,"team":"away","type":"match"}},"num":"M5_5007","round":"R8","roundOrder":5,"schedule":{"court":"-OmU2Qz0A7-tZHGWlfcA","courtName":"Pista 2","day":"2026-10-24","duration":"4","hour":"hour1500","hourName":"15:00"},"serie":"Octavos 7","style":{"height":"inherit","heightSep":1020,"left":"0","matchOrder":5,"position":"relative","roundOrder":0,"top":"0","width":"inherit"},"teams":{"away":{"name":"Perdedor de Previa 4","previousRound":{"name":"Perdedor de Previa 4","position":2,"source":"M5_1004","type":"match"},"seed":10},"home":{"name":"Perdedor de Previa 5","previousRound":{"name":"Perdedor de Previa 5","position":2,"source":"M5_1005","type":"match"},"seed":7}}},"-P0c-Ek5aDiamycFMz6H_M5_5008":{"availabilityCount":656,"categoryId":"-P0c0KCWF3GxfJfqdRVJ","consolation":false,"nextRound":{"position_1":{"destination":"M5_6001","name":"Cuartos 1","position":1,"team":"away","type":"match"}},"num":"M5_5008","round":"R8","roundOrder":5,"schedule":{"court":"-OrPQOO38TKfKXBZra0b","courtName":"Pista 3","day":"2026-10-24","duration":"4","hour":"hour1500","hourName":"15:00"},"serie":"Octavos 8","style":{"height":"inherit","heightSep":220,"left":"0","matchOrder":1,"position":"relative","roundOrder":0,"top":"0","width":"inherit"},"teams":{"away":{"name":"Perdedor de Previa 3","previousRound":{"name":"Perdedor de Previa 3","position":2,"source":"M5_1003","type":"match"},"seed":9},"home":{"name":"Perdedor de Previa 6","previousRound":{"name":"Perdedor de Previa 6","position":2,"source":"M5_1006","type":"match"},"seed":8}}},"-P0c-Ek5aDiamycFMz6H_M5_6001":{"availabilityCount":656,"categoryId":"-P0c0KCWF3GxfJfqdRVJ","consolation":false,"nextRound":{"position_1":{"destination":"M5_7001","name":"Semifinal 1","position":1,"team":"home","type":"match"}},"num":"M5_6001","round":"Q","roundOrder":6,"schedule":{"court":"-OmU2QDeejZm78ep-s5Z","courtName":"Pista 1","day":"2026-10-25","duration":"4","hour":"hour1000","hourName":"10:00"},"serie":"Cuartos 1","style":{"height":"inherit","heightSep":20,"left":"0","matchOrder":0,"position":"relative","roundOrder":0,"top":"0","width":"inherit"},"teams":{"away":{"name":"Ganador de Octavos 8","previousRound":{"name":"Ganador de Octavos 8","position":1,"source":"M5_5008","type":"match"}},"home":{"name":"Ganador de Previa 1","previousRound":{"name":"Ganador de Previa 1","position":1,"source":"M5_1001","type":"match"},"seed":1}}},"-P0c-Ek5aDiamycFMz6H_M5_6002":{"availabilityCount":656,"categoryId":"-P0c0KCWF3GxfJfqdRVJ","consolation":false,"nextRound":{"position_1":{"destination":"M5_7002","name":"Semifinal 2","position":1,"team":"home","type":"match"}},"num":"M5_6002","round":"Q","roundOrder":6,"schedule":{"court":"-OrPQOO38TKfKXBZra0b","courtName":"Pista 3","day":"2026-10-24","duration":"4","hour":"hour1800","hourName":"18:00"},"serie":"Cuartos 2","style":{"height":"inherit","heightSep":820,"left":"0","matchOrder":2,"position":"relative","roundOrder":1,"top":"0","width":"inherit"},"teams":{"away":{"name":"Ganador de Octavos 7","previousRound":{"name":"Ganador de Octavos 7","position":1,"source":"M5_5007","type":"match"}},"home":{"name":"Ganador de Previa 2","previousRound":{"name":"Ganador de Previa 2","position":1,"source":"M5_1002","type":"match"},"seed":2}}},"-P0c-Ek5aDiamycFMz6H_M5_6003":{"availabilityCount":656,"categoryId":"-P0c0KCWF3GxfJfqdRVJ","consolation":false,"nextRound":{"position_1":{"destination":"M5_7002","name":"Semifinal 2","position":1,"team":"away","type":"match"}},"num":"M5_6003","round":"Q","roundOrder":6,"schedule":{"court":"-OrPQP0A2IQZHPJDcoAA","courtName":"Pista 4","day":"2026-10-24","duration":"4","hour":"hour1900","hourName":"19:00"},"serie":"Cuartos 3","style":{"height":"inherit","heightSep":1220,"left":"0","matchOrder":3,"position":"relative","roundOrder":1,"top":"0","width":"inherit"},"teams":{"away":{"name":"Ganador de Octavos 6","previousRound":{"name":"Ganador de Octavos 6","position":1,"source":"M5_5006","type":"match"}},"home":{"name":"Ganador de Previa 3","previousRound":{"name":"Ganador de Previa 3","position":1,"source":"M5_1003","type":"match"},"seed":3}}},"-P0c-Ek5aDiamycFMz6H_M5_6004":{"availabilityCount":656,"categoryId":"-P0c0KCWF3GxfJfqdRVJ","consolation":false,"nextRound":{"position_1":{"destination":"M5_7001","name":"Semifinal 1","position":1,"team":"away","type":"match"}},"num":"M5_6004","round":"Q","roundOrder":6,"schedule":{"court":"-OrPQOO38TKfKXBZra0b","courtName":"Pista 3","day":"2026-10-24","duration":"4","hour":"hour2100","hourName":"21:00"},"serie":"Cuartos 4","style":{"height":"inherit","heightSep":420,"left":"0","matchOrder":1,"position":"relative","roundOrder":1,"top":"0","width":"inherit"},"teams":{"away":{"name":"Ganador de Octavos 5","previousRound":{"name":"Ganador de Octavos 5","position":1,"source":"M5_5005","type":"match"}},"home":{"name":"Ganador de Previa 4","previousRound":{"name":"Ganador de Previa 4","position":1,"source":"M5_1004","type":"match"},"seed":4}}},"-P0c-Ek5aDiamycFMz6H_M5_7001":{"availabilityCount":656,"categoryId":"-P0c0KCWF3GxfJfqdRVJ","consolation":false,"nextRound":{"position_1":{"destination":"M5_8001","name":"Final","position":1,"team":"home","type":"match"}},"num":"M5_7001","round":"S","roundOrder":7,"schedule":{"court":"-OmU2QDeejZm78ep-s5Z","courtName":"Pista 1","day":"2026-10-25","duration":"4","hour":"hour1200","hourName":"12:00"},"serie":"Semifinal 1","style":{"height":"inherit","heightSep":20,"left":"0","matchOrder":0,"position":"relative","roundOrder":2,"top":"0","width":"inherit"},"teams":{"away":{"name":"Ganador de Cuartos 4","previousRound":{"name":"Ganador de Cuartos 4","position":1,"source":"M5_6004","type":"match"}},"home":{"name":"Ganador de Cuartos 1","previousRound":{"name":"Ganador de Cuartos 1","position":1,"source":"M5_6001","type":"match"}}}},"-P0c-Ek5aDiamycFMz6H_M5_7002":{"availabilityCount":656,"categoryId":"-P0c0KCWF3GxfJfqdRVJ","consolation":false,"nextRound":{"position_1":{"destination":"M5_8001","name":"Final","position":1,"team":"away","type":"match"}},"num":"M5_7002","round":"S","roundOrder":7,"schedule":{"court":"-OrPQP0A2IQZHPJDcoAA","courtName":"Pista 4","day":"2026-10-25","duration":"4","hour":"hour1100","hourName":"11:00"},"serie":"Semifinal 2","style":{"height":"inherit","heightSep":820,"left":"0","matchOrder":1,"position":"relative","roundOrder":2,"top":"0","width":"inherit"},"teams":{"away":{"name":"Ganador de Cuartos 3","previousRound":{"name":"Ganador de Cuartos 3","position":1,"source":"M5_6003","type":"match"}},"home":{"name":"Ganador de Cuartos 2","previousRound":{"name":"Ganador de Cuartos 2","position":1,"source":"M5_6002","type":"match"}}}},"-P0c-Ek5aDiamycFMz6H_M5_8001":{"availabilityCount":656,"categoryId":"-P0c0KCWF3GxfJfqdRVJ","consolation":false,"num":"M5_8001","round":"F","roundOrder":8,"schedule":{"court":"-OmU2Qz0A7-tZHGWlfcA","courtName":"Pista 2","day":"2026-10-25","duration":"4","hour":"hour1400","hourName":"14:00"},"serie":"Final","style":{"height":"inherit","heightSep":20,"left":"0","matchOrder":0,"position":"relative","roundOrder":3,"top":"0","width":"inherit"},"teams":{"away":{"name":"Ganador de Semifinal 2","previousRound":{"name":"Ganador de Semifinal 2","position":1,"source":"M5_7002","type":"match"}},"home":{"name":"Ganador de Semifinal 1","previousRound":{"name":"Ganador de Semifinal 1","position":1,"source":"M5_7001","type":"match"}}}},"-P0c-Ek5aDiamycFMz6H_XC_1001":{"availabilityCount":528,"categoryId":"-P0c0KCWF3GxfJfqdRVK","nextRound":{"position_1":{"destination":"XC_6001","name":"Cuartos 1","position":1,"team":"home","type":"match"},"position_2":{"destination":"XC_6002","name":"Cuartos 2","position":2,"team":"away","type":"match"}},"num":"XC_1001","round":"P","roundOrder":1,"schedule":{"court":"-OrPQP0A2IQZHPJDcoAA","courtName":"Pista 4","day":"2026-10-23","duration":"4","hour":"hour1700","hourName":"17:00"},"serie":"Previa 1","teams":{"away":{"inscriptionId":"-P0r6Unjz1CaHVohupm4","name":"Damià Salom - Marga A.O.","seed":1},"home":{"inscriptionId":"-P36vcjNvl89YvNHvTTH","name":"Paula Socias - Roberto De Robert","seed":5}}},"-P0c-Ek5aDiamycFMz6H_XC_1002":{"availabilityCount":440,"categoryId":"-P0c0KCWF3GxfJfqdRVK","nextRound":{"position_1":{"destination":"XC_6002","name":"Cuartos 2","position":1,"team":"home","type":"match"},"position_2":{"destination":"XC_6001","name":"Cuartos 1","position":2,"team":"away","type":"match"}},"num":"XC_1002","round":"P","roundOrder":1,"schedule":{"court":"-OmU2QDeejZm78ep-s5Z","courtName":"Pista 1","day":"2026-10-23","duration":"4","hour":"hour2100","hourName":"21:00"},"serie":"Previa 2","teams":{"away":{"inscriptionId":"-P3HTJPAEfL2cCmolD7M","name":"A M P - Jose Jover Marquez","seed":6},"home":{"inscriptionId":"-P4KGgUkrOcPWP9sR77R","name":"Carsten - Manja Wiebach","seed":8}}},"-P0c-Ek5aDiamycFMz6H_XC_1003":{"availabilityCount":520,"categoryId":"-P0c0KCWF3GxfJfqdRVK","nextRound":{"position_1":{"destination":"XC_6003","name":"Cuartos 3","position":1,"team":"home","type":"match"},"position_2":{"destination":"XC_6004","name":"Cuartos 4","position":2,"team":"away","type":"match"}},"num":"XC_1003","round":"P","roundOrder":1,"schedule":{"court":"-OmU2QDeejZm78ep-s5Z","courtName":"Pista 1","day":"2026-10-23","duration":"4","hour":"hour2000","hourName":"20:00"},"serie":"Previa 3","teams":{"away":{"inscriptionId":"-P1W-HylL9HjFYdGbBQ-","name":"Lorena Sureda - Ray Vega","seed":3},"home":{"inscriptionId":"-P1958LDEu4IFPc0ErpY","name":"Tita B - Tito C","seed":2}}},"-P0c-Ek5aDiamycFMz6H_XC_1004":{"availabilityCount":552,"categoryId":"-P0c0KCWF3GxfJfqdRVK","nextRound":{"position_1":{"destination":"XC_6004","name":"Cuartos 4","position":1,"team":"home","type":"match"},"position_2":{"destination":"XC_6003","name":"Cuartos 3","position":2,"team":"away","type":"match"}},"num":"XC_1004","round":"P","roundOrder":1,"schedule":{"court":"-OmU2Qz0A7-tZHGWlfcA","courtName":"Pista 2","day":"2026-10-23","duration":"4","hour":"hour2000","hourName":"20:00"},"serie":"Previa 4","teams":{"away":{"inscriptionId":"-P2cb8qN7YHaA0gowgWp","name":"Xisco R - Margarita Tomas Tomas","seed":4},"home":{"inscriptionId":"-P494b5PrWd3Btlo0cuK","name":"Daniel Sarmiento - Carmen Gaitán","seed":7}}},"-P0c-Ek5aDiamycFMz6H_XC_6001":{"availabilityCount":656,"categoryId":"-P0c0KCWF3GxfJfqdRVK","consolation":false,"nextRound":{"position_1":{"destination":"XC_7001","name":"Semifinal 1","position":1,"team":"home","type":"match"}},"num":"XC_6001","round":"Q","roundOrder":6,"schedule":{"court":"-OrPQP0A2IQZHPJDcoAA","courtName":"Pista 4","day":"2026-10-24","duration":"4","hour":"hour2000","hourName":"20:00"},"serie":"Cuartos 1","style":{"height":"inherit","heightSep":20,"left":"0","matchOrder":0,"position":"relative","roundOrder":1,"top":"0","width":"inherit"},"teams":{"away":{"name":"Perdedor de Previa 2","previousRound":{"name":"Perdedor de Previa 2","position":2,"source":"XC_1002","type":"match"},"seed":8},"home":{"name":"Ganador de Previa 1","previousRound":{"name":"Ganador de Previa 1","position":1,"source":"XC_1001","type":"match"},"seed":1}}},"-P0c-Ek5aDiamycFMz6H_XC_6002":{"availabilityCount":656,"categoryId":"-P0c0KCWF3GxfJfqdRVK","consolation":false,"nextRound":{"position_1":{"destination":"XC_7002","name":"Semifinal 2","position":1,"team":"home","type":"match"}},"num":"XC_6002","round":"Q","roundOrder":6,"schedule":{"court":"-OmU2Qz0A7-tZHGWlfcA","courtName":"Pista 2","day":"2026-10-24","duration":"4","hour":"hour2100","hourName":"21:00"},"serie":"Cuartos 2","style":{"height":"inherit","heightSep":820,"left":"0","matchOrder":2,"position":"relative","roundOrder":1,"top":"0","width":"inherit"},"teams":{"away":{"name":"Perdedor de Previa 1","previousRound":{"name":"Perdedor de Previa 1","position":2,"source":"XC_1001","type":"match"},"seed":7},"home":{"name":"Ganador de Previa 2","previousRound":{"name":"Ganador de Previa 2","position":1,"source":"XC_1002","type":"match"},"seed":2}}},"-P0c-Ek5aDiamycFMz6H_XC_6003":{"availabilityCount":656,"categoryId":"-P0c0KCWF3GxfJfqdRVK","consolation":false,"nextRound":{"position_1":{"destination":"XC_7002","name":"Semifinal 2","position":1,"team":"away","type":"match"}},"num":"XC_6003","round":"Q","roundOrder":6,"schedule":{"court":"-OrPQOO38TKfKXBZra0b","courtName":"Pista 3","day":"2026-10-24","duration":"4","hour":"hour2000","hourName":"20:00"},"serie":"Cuartos 3","style":{"height":"inherit","heightSep":1220,"left":"0","matchOrder":3,"position":"relative","roundOrder":1,"top":"0","width":"inherit"},"teams":{"away":{"name":"Perdedor de Previa 4","previousRound":{"name":"Perdedor de Previa 4","position":2,"source":"XC_1004","type":"match"},"seed":6},"home":{"name":"Ganador de Previa 3","previousRound":{"name":"Ganador de Previa 3","position":1,"source":"XC_1003","type":"match"},"seed":3}}},"-P0c-Ek5aDiamycFMz6H_XC_6004":{"availabilityCount":656,"categoryId":"-P0c0KCWF3GxfJfqdRVK","consolation":false,"nextRound":{"position_1":{"destination":"XC_7001","name":"Semifinal 1","position":1,"team":"away","type":"match"}},"num":"XC_6004","round":"Q","roundOrder":6,"schedule":{"court":"-OrPQP0A2IQZHPJDcoAA","courtName":"Pista 4","day":"2026-10-24","duration":"4","hour":"hour2100","hourName":"21:00"},"serie":"Cuartos 4","style":{"height":"inherit","heightSep":420,"left":"0","matchOrder":1,"position":"relative","roundOrder":1,"top":"0","width":"inherit"},"teams":{"away":{"name":"Perdedor de Previa 3","previousRound":{"name":"Perdedor de Previa 3","position":2,"source":"XC_1003","type":"match"},"seed":5},"home":{"name":"Ganador de Previa 4","previousRound":{"name":"Ganador de Previa 4","position":1,"source":"XC_1004","type":"match"},"seed":4}}},"-P0c-Ek5aDiamycFMz6H_XC_7001":{"availabilityCount":656,"categoryId":"-P0c0KCWF3GxfJfqdRVK","consolation":false,"nextRound":{"position_1":{"destination":"XC_8001","name":"Final","position":1,"team":"home","type":"match"}},"num":"XC_7001","round":"S","roundOrder":7,"schedule":{"court":"-OmU2Qz0A7-tZHGWlfcA","courtName":"Pista 2","day":"2026-10-25","duration":"4","hour":"hour1200","hourName":"12:00"},"serie":"Semifinal 1","style":{"height":"inherit","heightSep":20,"left":"0","matchOrder":0,"position":"relative","roundOrder":2,"top":"0","width":"inherit"},"teams":{"away":{"name":"Ganador de Cuartos 4","previousRound":{"name":"Ganador de Cuartos 4","position":1,"source":"XC_6004","type":"match"}},"home":{"name":"Ganador de Cuartos 1","previousRound":{"name":"Ganador de Cuartos 1","position":1,"source":"XC_6001","type":"match"}}}},"-P0c-Ek5aDiamycFMz6H_XC_7002":{"availabilityCount":656,"categoryId":"-P0c0KCWF3GxfJfqdRVK","consolation":false,"nextRound":{"position_1":{"destination":"XC_8001","name":"Final","position":1,"team":"away","type":"match"}},"num":"XC_7002","round":"S","roundOrder":7,"schedule":{"court":"-OrPQOO38TKfKXBZra0b","courtName":"Pista 3","day":"2026-10-25","duration":"4","hour":"hour1200","hourName":"12:00"},"serie":"Semifinal 2","style":{"height":"inherit","heightSep":820,"left":"0","matchOrder":1,"position":"relative","roundOrder":2,"top":"0","width":"inherit"},"teams":{"away":{"name":"Ganador de Cuartos 3","previousRound":{"name":"Ganador de Cuartos 3","position":1,"source":"XC_6003","type":"match"}},"home":{"name":"Ganador de Cuartos 2","previousRound":{"name":"Ganador de Cuartos 2","position":1,"source":"XC_6002","type":"match"}}}},"-P0c-Ek5aDiamycFMz6H_XC_8001":{"availabilityCount":656,"categoryId":"-P0c0KCWF3GxfJfqdRVK","consolation":false,"num":"XC_8001","round":"F","roundOrder":8,"schedule":{"court":"-OrPQOO38TKfKXBZra0b","courtName":"Pista 3","day":"2026-10-25","duration":"4","hour":"hour1400","hourName":"14:00"},"serie":"Final","style":{"height":"inherit","heightSep":20,"left":"0","matchOrder":0,"position":"relative","roundOrder":3,"top":"0","width":"inherit"},"teams":{"away":{"name":"Ganador de Semifinal 2","previousRound":{"name":"Ganador de Semifinal 2","position":1,"source":"XC_7002","type":"match"}},"home":{"name":"Ganador de Semifinal 1","previousRound":{"name":"Ganador de Semifinal 1","position":1,"source":"XC_7001","type":"match"}}}}},"pub":{"name":"PORTOCOLOM PADEL & HOTEL EXPERIENCE"}};/*/SNAPSHOT*/
+</script>
+<script>
+(() => {
+const TID = "-P0c-Ek5aDiamycFMz6H";
+const BASE = "https://sportelia-torneos.firebaseio.com/tournaments/";
+const OFFICIAL = cat => `https://torneos.sportelia.es/#/tournaments-matches/${TID}/${cat}`;
+const DUR_MIN = 60;
+const REFRESH_MS = 60000;
+
+// Las parejas que seguimos. "find" son trozos del nombre tal y como aparece en Sportelia (sin tildes).
+const TEAMS = [
+  { key:"f4", cat:"-P0c0KCVA9HLmbtUu-LS", label:"4ª Femenina", short:"4F", nice:"Carolina Dias Tomas · Irene Piza", find:["carol","piza"], color:"var(--t1)" },
+  { key:"m4", cat:"-P0c0KCWF3GxfJfqdRVI", label:"4ª Masculina", short:"4M", nice:"Xisco R · Victor", find:["xisco r","victor"], color:"var(--t2)" },
+  { key:"m5", cat:"-P0c0KCWF3GxfJfqdRVJ", label:"5ª Masculina", short:"5M", nice:"Esmeralda Diaz · Francisco Rotger Font", find:["rotger font"], color:"var(--t3)" },
+  { key:"mx", cat:"-P0c0KCWF3GxfJfqdRVK", label:"Mixto", short:"MX", nice:"Xisco R · Margarita Tomas Tomas", find:["xisco r","margarita"], color:"var(--t4)" },
+];
+// Personas que juegan en más de una categoría (para avisar de solapes).
+const SHARED = [{ who:"Xisco", teams:["m4","mx"] }];
+
+const $ = s => document.querySelector(s);
+const norm = s => (s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/\s+/g," ").trim();
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const store = {
+  get(k, d){ try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+};
+
+// ---- Fechas en hora de Mallorca (Europe/Madrid). El domingo 25 cambia la hora (CEST -> CET).
+function lastSundayUTC(y, m){ const d = new Date(Date.UTC(y, m+1, 0)); d.setUTCDate(d.getUTCDate() - d.getUTCDay()); return d; }
+function madridOffsetHours(utcMs){
+  const y = new Date(utcMs).getUTCFullYear();
+  const start = lastSundayUTC(y, 2).getTime() + 3600e3, end = lastSundayUTC(y, 9).getTime() + 3600e3;
+  return (utcMs >= start && utcMs < end) ? 2 : 1;
+}
+function matchDate(sch){
+  if (!sch || !sch.day || !sch.hourName) return null;
+  const [Y,M,D] = sch.day.split("-").map(Number), [h,mi] = sch.hourName.split(":").map(Number);
+  let guess = Date.UTC(Y, M-1, D, h, mi) - 2*3600e3;
+  guess = Date.UTC(Y, M-1, D, h, mi) - madridOffsetHours(guess)*3600e3;
+  return new Date(guess);
+}
+const DAYS = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
+const DAYS_LONG = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+function dayLabel(sch){ const [Y,M,D] = sch.day.split("-").map(Number); return DAYS[new Date(Date.UTC(Y,M-1,D)).getUTCDay()] + " " + D; }
+function dayLong(day){ const [Y,M,D] = day.split("-").map(Number); return DAYS_LONG[new Date(Date.UTC(Y,M-1,D)).getUTCDay()] + " " + D; }
+function court(sch){ return (sch?.courtName || "").replace(/^Pista\s*/i, "P"); }
+function relTime(ms){
+  const m = Math.round(ms/60000);
+  if (m < 1) return "ya";
+  if (m < 60) return `en ${m} min`;
+  const h = Math.floor(m/60), r = m % 60;
+  if (h < 24) return r ? `en ${h} h ${r} min` : `en ${h} h`;
+  const d = Math.floor(h/24), hh = h % 24;
+  return hh ? `en ${d} d ${hh} h` : `en ${d} d`;
+}
+function gcal(title, start, details, loc){
+  const f = d => d.toISOString().replace(/[-:]/g,"").replace(/\.\d{3}/,"");
+  const end = new Date(start.getTime() + DUR_MIN*60000);
+  const p = new URLSearchParams({ action:"TEMPLATE", text:title, dates:`${f(start)}/${f(end)}`, details, location:loc });
+  return "https://calendar.google.com/calendar/render?" + p.toString();
+}
+
+// ---- Lógica del cuadro
+const isBye = t => /^bye$/i.test((t?.name||"").trim());
+function setsText(m, side){
+  const s = m.score; if (!s || !s.home || !s.away) return "";
+  const other = side === "home" ? "away" : "home";
+  return ["set1","set2","set3"].filter(k => s.home[k] != null && s.away[k] != null && (s.home[k] !== "" || s.away[k] !== ""))
+    .map(k => `${s[side][k]}-${s[other][k]}`).join("  ");
+}
+function winnerSide(m){
+  const s = m.score; if (!s) return null;
+  if (s.winner) return s.winner;
+  if (s.home?.winner === true) return "home";
+  if (s.away?.winner === true) return "away";
+  return null;
+}
+function outcomeFor(m, side){
+  const w = winnerSide(m);
+  if (w) return w === side ? "win" : "loss";
+  const other = side === "home" ? "away" : "home";
+  if (isBye(m.teams?.[other])) return "bye";
+  return null;
+}
+function dest(m, pos){ const n = m.nextRound?.["position_"+pos]; return n ? { num:n.destination, side:n.team } : null; }
+
+function analyse(data, team){
+  const all = Object.values(data.matches).filter(m => m.categoryId === team.cat);
+  const byNum = Object.fromEntries(all.map(m => [m.num, m]));
+  const f = team.find.map(norm);
+  let id = null, name = team.nice;
+  for (const m of all) for (const side of ["home","away"]) {
+    const t = m.teams?.[side];
+    if (t && f.every(x => norm(t.name).includes(x))) { id = t.inscriptionId || null; name = t.name; }
+    if (id) break;
+  }
+  const mine = all.filter(m => ["home","away"].some(s => id ? m.teams?.[s]?.inscriptionId === id : f.every(x => norm(m.teams?.[s]?.name).includes(x))))
+    .map(m => ({ m, side: ["home","away"].find(s => id ? m.teams?.[s]?.inscriptionId === id : f.every(x => norm(m.teams?.[s]?.name).includes(x))) }))
+    .sort((a,b) => (a.m.roundOrder||0) - (b.m.roundOrder||0) || (matchDate(a.m.schedule)||0) - (matchDate(b.m.schedule)||0));
+
+  const rows = mine.map(({m, side}) => {
+    const other = side === "home" ? "away" : "home";
+    return { m, side, opp: m.teams?.[other]?.name || "Por decidir", out: outcomeFor(m, side), date: matchDate(m.schedule), confirmed: true };
+  });
+
+  // Dónde está ahora la pareja: el primer partido confirmado sin resultado; si no hay, el destino del último resultado.
+  let current = rows.find(r => !r.out) || null;
+  let status = "pending";
+  const last = rows[rows.length - 1];
+  if (!current && last) {
+    const won = last.out === "win" || last.out === "bye";
+    const d = dest(last.m, won ? 1 : 2);
+    if (d && byNum[d.num]) {
+      const m = byNum[d.num], other = d.side === "home" ? "away" : "home";
+      current = { m, side: d.side, opp: m.teams?.[other]?.name || "Por decidir", out: null, date: matchDate(m.schedule), confirmed: true, inferred: true };
+      rows.push(current);
+    } else status = won && !last.m.nextRound ? "champions" : (won ? "done" : "out");
+  }
+  // Un BYE cuenta como pase directo: el partido real es el siguiente.
+  while (current && current.out === "bye") {
+    const d = dest(current.m, 1), m = d && byNum[d.num];
+    if (!m) break;
+    const other = d.side === "home" ? "away" : "home";
+    const ex = rows.find(r => r.m.num === m.num);
+    current = ex || { m, side: d.side, opp: m.teams?.[other]?.name || "Por decidir", out: null, date: matchDate(m.schedule), confirmed: true, inferred: true };
+    if (!ex) rows.push(current);
+    if (current.out && current.out !== "bye") { current = rows.find(r => !r.out) || null; break; }
+  }
+
+  // Ramas desde el partido actual.
+  const chain = (start) => {
+    const out = []; let d = start, guard = 0;
+    while (d && byNum[d.num] && guard++ < 8) {
+      const m = byNum[d.num], other = d.side === "home" ? "away" : "home";
+      out.push({ m, side: d.side, opp: m.teams?.[other]?.name || "Por decidir", date: matchDate(m.schedule), confirmed:false });
+      d = dest(m, 1);
+    }
+    return out;
+  };
+  let ifWin = [], ifLose = [], loseEnds = false;
+  if (current) {
+    ifWin = chain(dest(current.m, 1));
+    const ld = dest(current.m, 2);
+    ifLose = ld ? chain(ld) : [];
+    loseEnds = !ld;
+  }
+  return { team, id, name, rows, current, status, ifWin, ifLose, loseEnds, byNum };
+}
+
+// ---- Cambios de horario (se guardan en este móvil)
+function trackChanges(data){
+  const seen = store.get("pp-seen", {}), changes = store.get("pp-changes", []);
+  const now = Date.now(), cats = new Set(TEAMS.map(t => t.cat));
+  let first = Object.keys(seen).length === 0;
+  for (const m of Object.values(data.matches)) {
+    if (!cats.has(m.categoryId) || !m.schedule) continue;
+    const sig = `${m.schedule.day}|${m.schedule.hourName}|${m.schedule.courtName}`;
+    if (!first && seen[m.num] && seen[m.num] !== sig) {
+      const [d0,h0,c0] = seen[m.num].split("|");
+      changes.push({ num:m.num, at:now, before:`${dayLabel({day:d0})} ${h0} · ${c0}`, after:`${dayLabel(m.schedule)} ${m.schedule.hourName} · ${m.schedule.courtName}` });
+    }
+    seen[m.num] = sig;
+  }
+  const fresh = changes.filter(c => now - c.at < 12*3600e3);
+  store.set("pp-seen", seen); store.set("pp-changes", fresh);
+  return Object.fromEntries(fresh.map(c => [c.num, c]));
+}
+
+// ---- Render
+let state = { data:null, live:false, fetchedAt:null, filter: store.get("pp-filter","all"), maybe: store.get("pp-maybe", false) };
+
+function chipFor(r, now){
+  if (r.out === "win") return `<span class="chip ok">Ganado</span>`;
+  if (r.out === "loss") return `<span class="chip bad">Perdido</span>`;
+  if (r.out === "bye") return `<span class="chip ok">Pase directo</span>`;
+  if (r.date && now >= r.date && now < r.date.getTime() + DUR_MIN*60000) return `<span class="chip live-now">Jugando</span>`;
+  return "";
+}
+function matchRow(r, team, now, changes, opts = {}){
+  const sch = r.m.schedule || {};
+  const sc = r.out === "win" || r.out === "loss" ? setsText(r.m, r.side) : "";
+  const ch = changes[r.m.num];
+  const cal = r.date && !r.out && r.date > now
+    ? `<a class="cal" target="_blank" rel="noopener" href="${esc(gcal(`Pádel ${team.label}: ${r.m.serie}`, r.date, `${team.nice} vs ${r.opp}\n${sch.courtName}`, "Smy Portocolom, Carrer dels Germans Pinzón 18, Portocolom"))}">+ Calendario</a>` : "";
+  return `<div class="mrow ${r.confirmed ? "" : "maybe"} ${opts.cls||""}">
+    <div class="when"><span class="d">${esc(dayLabel(sch))}</span><span class="h num">${esc(sch.hourName||"--:--")}</span></div>
+    <div class="mid">
+      <span class="rnd">${opts.teamLabel ? `<span class="tname"><span class="tdot" style="--tc:${team.color}"></span>${esc(team.label)}</span>` : ""}${esc(r.m.serie || r.m.num)}${opts.cond ? ` · <em>${esc(opts.cond)}</em>` : ""}</span>
+      <span class="opp">vs ${esc(r.opp)}</span>
+      ${ch ? `<span class="chip warn" title="Antes: ${esc(ch.before)}">Cambiado · antes ${esc(ch.before)}</span>` : ""}
+    </div>
+    <div class="right">
+      <span class="chip court">${esc(court(sch))}</span>
+      ${sc ? `<span class="score num">${esc(sc)}</span>` : ""}
+      ${chipFor(r, now)}
+      ${cal}
+    </div>
+  </div>`;
+}
+
+function calRow(it, now, changes, isNext){
+  const { a, r, cond } = it, team = a.team, sch = r.m.schedule || {};
+  const sc = r.out === "win" || r.out === "loss" ? setsText(r.m, r.side) : "";
+  const ch = changes[r.m.num];
+  const done = r.out || (r.date && r.date.getTime() + DUR_MIN*60000 < now);
+  const cal = r.date && !r.out && r.date > now
+    ? `<a class="cal" target="_blank" rel="noopener" href="${esc(gcal(`Pádel ${team.label}: ${team.nice}`, r.date, `${r.m.serie} vs ${r.opp}\n${sch.courtName}`, "Smy Portocolom, Carrer dels Germans Pinzón 18, Portocolom"))}">+ Calendario</a>` : "";
+  return `<div class="mrow ag ${r.confirmed ? "" : "maybe"} ${done ? "past" : ""} ${isNext ? "is-next" : ""}" style="--tc:${team.color}">
+    <div class="when"><span class="h num">${esc(sch.hourName||"--:--")}</span><span class="d">${esc(court(sch))}</span></div>
+    <div class="mid">
+      <span class="cat">${esc(team.label)} · ${esc(r.m.serie || r.m.num)}</span>
+      <span class="pair">${esc(team.nice)}</span>
+      <span class="opp">vs ${esc(r.opp)}${cond ? ` · <em>${esc(cond)}</em>` : ""}</span>
+      ${ch ? `<span class="chip warn">Cambiado · antes ${esc(ch.before)}</span>` : ""}
+    </div>
+    <div class="right">
+      ${isNext ? `<span class="chip live-now">${now >= r.date ? "Jugando" : esc(relTime(r.date - now))}</span>` : chipFor(r, now)}
+      ${sc ? `<span class="score num">${esc(sc)}</span>` : ""}
+      ${cal}
+    </div>
+  </div>`;
+}
+
+function render(){
+  const { data } = state; if (!data) return;
+  const now = new Date();
+  const changes = trackChanges(data);
+  const A = TEAMS.map(t => analyse(data, t));
+
+  // Próximo partido confirmado (se marca en el calendario).
+  const upcoming = A.flatMap(a => a.rows.filter(r => !r.out && r.date && r.date.getTime() + DUR_MIN*60000 > now).map(r => ({ a, r })))
+    .sort((x,y) => x.r.date - y.r.date);
+  const nextKey = upcoming[0] ? upcoming[0].a.team.key + upcoming[0].r.m.num : null;
+
+  // Avisos: solapes de la misma persona en dos categorías.
+  const alerts = [];
+  for (const sh of SHARED) {
+    const [a1, a2] = sh.teams.map(k => A.find(a => a.team.key === k));
+    const cand = a => [
+      ...(a.current ? [{ r:a.current, cond:null }] : []),
+      ...a.rows.filter(r => !r.out && r !== a.current).map(r => ({ r, cond:null })),
+      ...a.ifWin.map((r,i) => ({ r, cond: i === 0 ? "si ganan" : "si siguen ganando" })),
+      ...a.ifLose.map((r,i) => ({ r, cond: i === 0 ? "si pierden" : "si pierden y luego ganan" })),
+    ].filter(x => x.r.date && x.r.date > now);
+    const seen = new Set();
+    for (const x of cand(a1)) for (const y of cand(a2)) {
+      const gap = Math.abs(x.r.date - y.r.date) / 60000;
+      const k = x.r.m.num + y.r.m.num; if (seen.has(k)) continue;
+      if (gap < DUR_MIN) {
+        seen.add(k);
+        const sure = !x.cond && !y.cond;
+        alerts.push({ sure, html:`<div class="alert" style="--ac:var(${sure ? "--bad" : "--warn"})"><span class="ico">!</span><div><b>${sure ? "Solape" : "Posible solape"} de ${esc(sh.who)}: ${esc(dayLabel(x.r.m.schedule))}</b>
+          ${esc(a1.team.label)} ${esc(x.r.m.serie)} a las ${esc(x.r.m.schedule.hourName)} (${esc(x.r.m.schedule.courtName)})${x.cond ? `, ${esc(x.cond)}` : ""}, y ${esc(a2.team.label)} ${esc(y.r.m.serie)} a las ${esc(y.r.m.schedule.hourName)} (${esc(y.r.m.schedule.courtName)})${y.cond ? `, ${esc(y.cond)}` : ""}. Conviene avisar a la organización.</div></div>` });
+      }
+    }
+  }
+  const chs = Object.values(changes);
+  if (chs.length) alerts.unshift({ html:`<div class="alert" style="--ac:var(--warn)"><span class="ico">↻</span><div><b>Han cambiado ${chs.length === 1 ? "un horario" : chs.length + " horarios"} en las últimas horas</b>Están marcados como «Cambiado» en la lista.</div></div>` });
+  alerts.sort((a,b) => (b.sure?1:0) - (a.sure?1:0));
+  $("#alerts").innerHTML = alerts.map(a => a.html).join("");
+
+  // Filtros y calendario.
+  const f = state.filter, maybe = state.maybe;
+  $("#filters").innerHTML = [`<button type="button" data-f="all" aria-pressed="${f==="all"}">Todas</button>`,
+    ...TEAMS.map(t => `<button type="button" data-f="${t.key}" aria-pressed="${f===t.key}"><span class="tdot" style="--tc:${t.color}"></span>${esc(t.short)}</button>`),
+    `<button type="button" data-m="1" aria-pressed="${maybe}">+ posibles</button>`].join("");
+  $("#filters").querySelectorAll("button[data-f]").forEach(b => b.onclick = () => { state.filter = b.dataset.f; store.set("pp-filter", state.filter); render(); });
+  $("#filters").querySelector("button[data-m]").onclick = () => { state.maybe = !state.maybe; store.set("pp-maybe", state.maybe); render(); };
+
+  const uniq = new Map();
+  const add = (a, r, cond) => { const k = a.team.key + r.m.num; if (!uniq.has(k)) uniq.set(k, { a, r, cond, k }); };
+  for (const a of A) {
+    if (f !== "all" && f !== a.team.key) continue;
+    a.rows.forEach(r => add(a, r, null));
+    if (maybe) {
+      a.ifWin.forEach((r,i) => add(a, r, i === 0 ? "si ganan" : "si siguen ganando"));
+      a.ifLose.forEach((r,i) => add(a, r, i === 0 ? "si pierden" : "si pierden y luego ganan"));
+    }
+  }
+  const byDay = {};
+  [...uniq.values()].filter(it => it.r.m.schedule?.day).sort((x,y) => x.r.date - y.r.date || x.a.team.key.localeCompare(y.a.team.key))
+    .forEach(it => (byDay[it.r.m.schedule.day] ||= []).push(it));
+  const days = Object.keys(byDay).sort();
+  $("#agenda").innerHTML = days.length ? days.map(d => `<div class="day"><h3>${esc(dayLong(d))}<span>${byDay[d].filter(i => !i.cond).length} confirmados</span></h3>
+    ${byDay[d].map(it => calRow(it, now, changes, it.k === nextKey)).join("")}</div>`).join("")
+    : `<div class="empty">No hay partidos para este filtro.</div>`;
+  if (!maybe) $("#agenda").insertAdjacentHTML("beforeend", `<div class="empty">Pulsa «+ posibles» para ver también los partidos que dependen de los resultados.</div>`);
+
+  // Estado de la conexión.
+  const live = $("#live");
+  live.className = "live " + (state.live ? "on" : "off");
+  const t = state.fetchedAt ? state.fetchedAt.toLocaleTimeString("es-ES", { hour:"2-digit", minute:"2-digit" }) : "";
+  $("#liveText").textContent = state.live ? `En directo · ${t}` : `Copia de las ${t} (sin conexión con Sportelia)`;
+}
+
+async function getJSON(path){
+  const r = await fetch(BASE + path + "/" + TID + ".json", { cache:"no-store" });
+  if (!r.ok) throw new Error(r.status);
+  return r.json();
+}
+async function load(){
+  try {
+    const [matches, pub] = await Promise.all([getJSON("matches"), getJSON("public").catch(() => null)]);
+    if (!matches) throw new Error("vacío");
+    state.data = { matches, pub };
+    state.live = true; state.fetchedAt = new Date();
+  } catch (e) {
+    if (!state.data && SNAPSHOT) { state.data = SNAPSHOT; state.fetchedAt = new Date(SNAPSHOT.at); }
+    state.live = false;
+  }
+  if (state.data?.pub?.name) $("#tname").textContent = state.data.pub.name.toLowerCase().replace(/(^|\s|&)\S/g, s => s.toUpperCase()).replace("Padel","Pádel");
+  render();
+}
+
+$("#live").onclick = load;
+document.addEventListener("visibilitychange", () => { if (!document.hidden) load(); });
+setInterval(() => { if (!document.hidden) load(); }, REFRESH_MS);
+setInterval(() => { if (!document.hidden) render(); }, 20000);
+load();
+})();
+</script>
+
+</body>
+</html>
